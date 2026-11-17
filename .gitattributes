@@ -1,0 +1,8 @@
+* text=auto
+
+# Shell scripts must keep LF even when cloned on Windows, or bash fails with $'\r'
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.json text eol=lf
+*.md text eol=lf
+*.js text eol=lf

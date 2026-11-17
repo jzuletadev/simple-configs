@@ -1,0 +1,10 @@
+# Local Claude Code overrides (never committed)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Backups created by the install scripts
+*.bak-*
+
+# OS files
+.DS_Store
+Thumbs.db

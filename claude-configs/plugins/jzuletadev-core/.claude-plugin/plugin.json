@@ -1,0 +1,9 @@
+{
+  "name": "jzuletadev-core",
+  "version": "2.1.0",
+  "description": "Agents for each step (explore, decide, build, test, review), decision, verify, retro and commit commands, a document style skill and a format hook",
+  "license": "MIT",
+  "author": {
+    "name": "jzuletadev"
+  }
+}
