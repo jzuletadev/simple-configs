@@ -36,15 +36,13 @@ Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object { $e = $null; [void][Syste
 
 ## claude-configs
 
-Config is split by where Claude reads it (see `claude-configs/docs/00-map.md`):
+Agents, skills, hooks, settings and MCP servers are not written here: they come from [claude-code-templates](https://docs.aitmpl.com) and are installed into `~/.claude`.
 
-- `plugins/jzuletadev-core/`: installed once per claude.ai account; reaches chat, Cowork and Claude Code. Agents (`explorer` haiku; `developer`, `tester`, `reviewer` and `docs-writer` sonnet; `architect` opus), the `document-style` skill, the commands `/decision`, `/verify`, `/retro` and `/commit` (none of them commits) and a PostToolUse hook (`hooks/format.js`) that runs Prettier only when the project has it and must never block.
-- The plugin, `global/CLAUDE.md`, `project-template/CLAUDE.md` and `claude-ai/` share one loop: plan (acceptance criteria, architect, `/decision`, `docs/decisions/`) → do (developer) → check (tester, reviewer, `/verify`, definition of done) → act (`/retro`, the project's review checklist). A change to one step must keep the others consistent.
-- `.claude-plugin/marketplace.json` lives at the **repo root**, so the marketplace is `jzuletadev/simple-configs` (name `jzuletadev-configs`). Its `source` must match the plugin folder path.
-- `global/` (`CLAUDE.md`, `settings.json`): copied to `~/.claude` by `claude-configs/scripts/install.{sh,ps1}` (called by the `claude` module), which backs up existing files as `*.bak-<timestamp>` and installs the third-party plugins listed in the script.
-- `project-template/`: copied into new repos by `scripts/new-project.{sh,ps1}` (never overwrites).
-- `claude-ai/`: text pasted by hand into claude.ai. The personal rules are duplicated in `claude-ai/preferences.md` and `global/CLAUDE.md`; keep them in sync.
+- `components.txt` is the single list (`agent=`, `skill=`, `hook=`, `setting=`, `mcp=`, comma-separated `category/name`). Both `claude-configs/scripts/install.{sh,ps1}` (called by the `claude` module) read it; never paste the list into a script.
+- The installers run `npx claude-code-templates --directory ~ --yes`, so everything is user-level. Hook commands come out as relative `python .claude/hooks/x.py`, which breaks outside `~`; `scripts/fix-hook-paths.js` rewrites them to absolute paths afterwards. Keep that step if you change the install flow.
+- Optional `global/CLAUDE.md` and `global/settings.json` are copied to `~/.claude` (with `*.bak-<timestamp>` backup) only when they exist.
+- `claude-ai/`: text pasted by hand into claude.ai. Its personal rules mirror the user's `~/.claude/CLAUDE.md`; keep them in sync.
 
-When changing the plugin, bump `version` in `plugins/jzuletadev-core/.claude-plugin/plugin.json`. Adding or renaming the plugin, an agent, a command or the skill means updating the READMEs, `claude-configs/docs/`, `global/CLAUDE.md` and `project-template/CLAUDE.md` in the same change.
+Changing the component set or the install flow means updating `claude-configs/README.md` and the `claude` row of the root README in the same change.
 
 Line endings are enforced by `.gitattributes`: LF for `.sh`, `.md`, `.json`, `.js`; CRLF for `.ps1`.

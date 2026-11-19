@@ -1,46 +1,48 @@
-# Claude configs
+# claude-configs
 
-My Claude setup in one place: plugin (agents, skill, command, hook), personal Claude Code settings, project template and claude.ai texts. It works on Windows (PowerShell), Ubuntu and Arch.
+Claude setup for every machine. Nothing here is custom-built: agents, skills, hooks, settings and MCP servers come from [claude-code-templates](https://docs.aitmpl.com) and are installed into `~/.claude` (`$HOME\.claude` on Windows), so they apply to every project.
 
-## What's here
+## Install
 
-- `plugins/jzuletadev-core/`: my plugin. 6 agents (explorer, architect, developer, tester, reviewer, docs-writer), the document-style skill, the `/decision`, `/verify`, `/retro` and `/commit` commands (none of them commits) and a Prettier format hook. See its [README](plugins/jzuletadev-core/README.md) for the workflow.
-- `../.claude-plugin/marketplace.json`: at the root of simple-configs. It turns the repo into the marketplace `jzuletadev/simple-configs`, so the plugin can be installed from claude.ai or Claude Code.
-- `global/`: my personal Claude Code `CLAUDE.md` and `settings.json` (they go to `~/.claude`).
-- `project-template/`: base `CLAUDE.md` and `.claude/settings.json` for every new repo.
-- `claude-ai/`: texts to paste into claude.ai (preferences and Project instructions).
-- `scripts/`: install (global config + third-party plugins) and new-project, for PowerShell and bash.
-- `docs/`: the guides.
+Through the setup menu (it also installs Claude Code):
 
-## Index
-
-- [Map: what goes where](docs/00-map.md)
-- [Installing Claude Code and the desktop app](docs/01-install.md)
-- [claude.ai (web, desktop and mobile)](docs/02-claude-ai.md)
-- [Desktop app and Cowork](docs/03-desktop-cowork.md)
-- [Claude Code](docs/04-claude-code.md)
-- [Plugins](docs/05-plugins.md)
-- [New project](docs/06-new-project.md)
-- [Maintenance and troubleshooting](docs/07-maintenance.md)
-
-## Quick start on a new machine
-
-1. From the root of simple-configs run the `claude` module: `.\setup.ps1 claude` on Windows or `bash setup.sh claude` on Linux. It installs Claude Code and copies `global/` to `~/.claude` ([04-claude-code](docs/04-claude-code.md)).
-2. In claude.ai add the marketplace `jzuletadev/simple-configs` and install `jzuletadev-core` ([02-claude-ai](docs/02-claude-ai.md)). This is done once per account, not per machine.
-
-If you only want the plugin in Claude Code, inside `claude` (one line per message):
-
-```
-/plugin marketplace add jzuletadev/simple-configs
+```powershell
+.\setup.ps1 claude
 ```
 
-```
-/plugin install jzuletadev-core@jzuletadev-configs
+```bash
+bash setup.sh claude
 ```
 
-## Conventions
+Or only the components, once Node.js and Python are installed:
 
-- Commands are ready to copy and paste, without prompt prefixes.
-- Commands starting with `/` are typed inside Claude Code, not in the terminal.
-- "Linux (common)" means it applies the same on Ubuntu and Arch.
-- `~/.claude` on Linux is `$HOME\.claude` in PowerShell (`C:\Users\YOUR-USER\.claude`).
+```powershell
+.\claude-configs\scripts\install.ps1
+```
+
+```bash
+bash claude-configs/scripts/install.sh
+```
+
+Rerunning is safe: files from the templates are replaced with the current version, your other files are kept. Open a new terminal afterwards and run `claude`.
+
+## What the installer does
+
+1. Copies `global/CLAUDE.md` and `global/settings.json` to `~/.claude` (with a `*.bak-<timestamp>` backup) if those files exist in this folder. Today there are none; add them to share personal rules across machines.
+2. Runs `npx claude-code-templates --directory ~ --yes` with the lists in `components.txt`. Agents, skills and hook scripts go to `~/.claude/agents`, `skills` and `hooks`; hooks and settings are merged into `~/.claude/settings.local.json`; MCP servers into `~/.mcp.json`.
+3. Runs `scripts/fix-hook-paths.js`: the templates write hook commands such as `python .claude/hooks/x.py`, relative to the project, which fail outside `~`. It rewrites them to absolute paths.
+
+If Node.js is missing, step 2 and 3 are skipped with a warning (`setup.ps1 node`). The Python hooks need `python` on the PATH (`setup.ps1 python`).
+
+## Change what gets installed
+
+Edit `components.txt` (one line per type, comma-separated `category/name`; browse names at [aitmpl.com](https://aitmpl.com)) and rerun the installer. Removing a name does not uninstall it: delete the file from `~/.claude` too.
+
+## claude.ai
+
+`claude-ai/` holds text to paste by hand: `preferences.md` into Settings > Profile and `project-instructions.md` into each Project. Claude Code reads `~/.claude/CLAUDE.md` instead; keep the personal rules in both places in sync.
+
+## Known issues
+
+- The `filesystem` and `markitdown` MCP servers can fail to connect (`CONNECTION_CLOSED`). `markitdown` needs `uv`/`uvx` (`setup.ps1 python`); check them with `claude mcp list`.
+- Settings from different templates are merged by the CLI, so later installs can override earlier ones. Review `~/.claude/settings.local.json` after changing `components.txt`.

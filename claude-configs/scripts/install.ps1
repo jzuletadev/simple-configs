@@ -1,6 +1,8 @@
-# Installs the global Claude Code configuration (Windows / PowerShell).
-# Copies global\CLAUDE.md and global\settings.json to $HOME\.claude.
-# Existing files are backed up with a timestamp before being replaced.
+# Installs the Claude Code configuration (Windows / PowerShell).
+# 1. Copies global\ files to $HOME\.claude, if the repo has any (existing files are backed up).
+# 2. Installs the agents, skills, hooks, settings and MCP servers listed in
+#    components.txt into $HOME\.claude with claude-code-templates.
+# 3. Makes the installed hook commands use absolute paths.
 
 $ErrorActionPreference = 'Stop'
 
@@ -13,6 +15,7 @@ New-Item -ItemType Directory -Force -Path $dest | Out-Null
 foreach ($file in @('CLAUDE.md', 'settings.json')) {
     $source = Join-Path $repo "global\$file"
     $target = Join-Path $dest $file
+    if (-not (Test-Path $source)) { continue }
 
     if (Test-Path $target) {
         Copy-Item $target "$target.bak-$stamp"
@@ -23,30 +26,34 @@ foreach ($file in @('CLAUDE.md', 'settings.json')) {
     Write-Host "Installed $target"
 }
 
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Warning 'Node.js is not on the PATH. Hooks and some plugins need it (run: .\setup.ps1 node).'
+if (-not ((Get-Command node -ErrorAction SilentlyContinue) -and (Get-Command npx -ErrorAction SilentlyContinue))) {
+    Write-Warning 'Node.js is not on the PATH; skipping agents, skills, hooks and MCP servers (run: .\setup.ps1 node).'
+    return
+}
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+    Write-Warning "'python' is not on the PATH; the Python hooks will fail (run: .\setup.ps1 python)."
 }
 
-# Third-party plugins for this machine: marketplace (repo) and plugin@marketplace
-$plugins = @(
-    @{ Market = 'DietrichGebert/ponytail';          Plugin = 'ponytail@ponytail' },
-    @{ Market = 'GoogleChrome/modern-web-guidance'; Plugin = 'modern-web-guidance@googlechrome' }
-)
-
-# In Windows PowerShell 5.1, redirecting an external command's error output while
-# 'Stop' is active ends the script even when the command succeeds.
-$ErrorActionPreference = 'Continue'
-
-if (Get-Command claude -ErrorAction SilentlyContinue) {
-    foreach ($p in $plugins) {
-        Write-Host "Plugin    $($p.Plugin)"
-        claude plugin marketplace add $p.Market *> $null
-        if ($LASTEXITCODE -ne 0) { Write-Warning "Could not add the marketplace $($p.Market)" }
-        claude plugin install $p.Plugin *> $null
-        if ($LASTEXITCODE -ne 0) { Write-Warning "Could not install $($p.Plugin)" }
+# Build the claude-code-templates arguments from components.txt.
+$npxArgs = @('--yes', 'claude-code-templates@latest', '--directory', $HOME, '--yes')
+foreach ($line in Get-Content (Join-Path $repo 'components.txt')) {
+    if ($line -match '^(agent|skill|hook|setting|mcp)=(.+)$') {
+        $npxArgs += "--$($Matches[1])"
+        $npxArgs += $Matches[2].Trim()
     }
+}
+
+Write-Host "Installing components into $dest (claude-code-templates)"
+# Home is the target directory, so everything lands in ~\.claude. --yes keeps it
+# non-interactive; hooks and settings then go to ~\.claude\settings.local.json.
+# Continue: with 'Stop', Windows PowerShell 5.1 ends the script on native stderr output.
+$ErrorActionPreference = 'Continue'
+npx @npxArgs
+if ($LASTEXITCODE -eq 0) {
+    node (Join-Path $PSScriptRoot 'fix-hook-paths.js')
+    if ($LASTEXITCODE -ne 0) { Write-Warning 'Could not fix hook paths.' }
 } else {
-    Write-Warning 'The claude command was not found. Install Claude Code (.\setup.ps1 claude) and run this script again.'
+    Write-Warning 'claude-code-templates failed; rerun this module to retry.'
 }
 
 Write-Host ''

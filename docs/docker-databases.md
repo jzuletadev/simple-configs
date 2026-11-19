@@ -18,7 +18,7 @@ docker exec -it CONTAINER bash
 docker system prune -a
 ```
 
-The shared shell config adds the aliases `dcu`, `dcd` and `dcl` for `docker compose up -d`, `down` and `logs -f`.
+The shared shell config adds the aliases `dcu`, `dcd`, `dcl` and `dcr` for `docker compose up -d`, `down`, `logs -f` and `restart`, and `dps` for a compact `docker ps`.
 
 ## Database containers
 

@@ -60,7 +60,7 @@ Run them in this order on a new machine. Every module can be rerun: it skips wha
 | `docker` | Docker Desktop (Windows) or Docker Engine + Compose (Linux) | Nothing |
 | `databases` | MySQL, PostgreSQL and MongoDB containers with persistent volumes | Engines, names, ports, passwords |
 | `cloud` | AWS, Google Cloud and Azure CLIs, then login | Which CLIs, profile, keys or SSO |
-| `claude` | Claude Code, desktop app and my Claude config ([claude-configs](claude-configs/README.md)) | Desktop app |
+| `claude` | Claude Code, desktop app and Claude components (agents, skills, hooks, MCP; [claude-configs](claude-configs/README.md)). Needs `node` first, `python` for the hooks | Desktop app |
 
 Passwords and keys you type go straight to the tool that needs them (ssh-keygen, aws, docker); nothing is written to this repo.
 
@@ -72,7 +72,7 @@ On Windows you don't need an administrator terminal: steps that need admin right
 - `scripts/windows/`, `scripts/linux/`: one script per module, same names on both sides. `scripts/lib/` holds the shared prompt and install helpers.
 - `config/`: files your shell loads on every machine. Add aliases in `config/powershell/profile.ps1` or `config/shell/common.sh` and `git pull` elsewhere.
 - `docs/`: quick reference and troubleshooting.
-- `claude-configs/`: Claude plugin, Claude Code settings, project template and claude.ai texts. The repo root is also a Claude plugin marketplace (`.claude-plugin/marketplace.json`).
+- `claude-configs/`: `components.txt` (agents, skills, hooks, settings and MCP servers installed with claude-code-templates), its install scripts and the claude.ai texts.
 
 ## Docs
 
